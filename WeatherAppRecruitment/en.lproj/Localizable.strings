@@ -1,0 +1,9 @@
+/* 
+  Localizable.strings
+  WeatherAppRecruitment
+
+  Created by Rafal Kampa on 12/09/2023.
+  
+*/
+
+"search.city.title.last" = "Last";
