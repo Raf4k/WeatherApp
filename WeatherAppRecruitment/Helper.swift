@@ -7,6 +7,11 @@
 
 import UIKit
 
-extension UIColor {
-    static let backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
+struct ApiDefines {
+    static let API_BASE_URL = "https://api.openweathermap.org/data/2.5"
+    static let API_WEATHER = "/weather"
+    static let API_HOURLY = "/forecast"
+    static let API_KEY = "80350a16925941125ea1c35b87553241"
 }
+
+

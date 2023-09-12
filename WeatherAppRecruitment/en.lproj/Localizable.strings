@@ -6,4 +6,9 @@
   
 */
 
-"search.city.title.last" = "Last";
+"search.city.title.last" = "Recently searched";
+"city.list.title" = "Weather";
+"details.temperature.from.to" = "from %i°C to %i°C";
+"alert.title" = "Oops";
+"alert.message" = "Something went wrong...";
+"details.hourly.header" = "Hourly forecast";

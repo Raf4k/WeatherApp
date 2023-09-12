@@ -7,6 +7,7 @@
 
 import UIKit
 
+// MARK: UIFont
 extension UIFont {
     static func boldFont(size: CGFloat) -> UIFont {
         return .systemFont(ofSize: size, weight: .bold)

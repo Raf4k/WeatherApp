@@ -7,10 +7,9 @@
 
 import UIKit
 
+// MARK: String
 extension String {
     var localized: String {
-        var result = Bundle.main.localizedString(forKey: self, value: nil, table: nil)
-        
-        return result
+        return Bundle.main.localizedString(forKey: self, value: nil, table: nil)
     }
 }

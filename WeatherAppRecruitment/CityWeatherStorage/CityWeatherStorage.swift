@@ -8,6 +8,7 @@
 import Foundation
 import CoreData
 
+// MARK: - CityWeatherStorage
 class CityWeatherStorage {
     static let shared = CityWeatherStorage()
     
@@ -15,13 +16,12 @@ class CityWeatherStorage {
         let container = NSPersistentContainer(name: "WeatherAppRecruitment")
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
+                //TODO: Add error handling propagation
                 fatalError("Unresolved error \(error), \(error.userInfo)")
             }
         })
         return container
     }()
-
-    // MARK: - Core Data Saving support
 
     func saveContext () {
         let context = persistentContainer.viewContext
@@ -30,12 +30,14 @@ class CityWeatherStorage {
                 try context.save()
             } catch {
                 let nserror = error as NSError
+                //TODO: Add error handling propagation
                 fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
             }
         }
     }
 }
 
+// MARK: - CityWeatherStorage Modifications
 extension CityWeatherStorage {
     func allSavedCities() -> [Cities] {
         do {
@@ -59,6 +61,16 @@ extension CityWeatherStorage {
     func removeWeatherStorageObject(_ object: NSManagedObject?) {
         guard let objectToRemove = object else { return }
         persistentContainer.viewContext.delete(objectToRemove)
+        saveContext()
+    }
+    
+    func removeSavedCity(savedCity: SelectedCity?) {
+        let objToRemove = allSavedCities().filter { $0.name == savedCity?.title }.first
+        removeWeatherStorageObject(objToRemove)
+    }
+    
+    func cityWasSaved(_ name: String) -> Bool {
+        return !allSavedCities().filter { $0.name == name }.isEmpty
     }
     
     func saveNewCity(name: String,
@@ -74,7 +86,10 @@ extension CityWeatherStorage {
         saveContext()
     }
     
-    func saveNewSearchedCities(title: String, subtitle: String) {
+    func saveNewSearchedCities(title: String,
+                               subtitle: String,
+                               lat: Double,
+                               long: Double) {
         let allCities = allSearchedCities()
         if allCities.count == 5 {
             removeWeatherStorageObject(allCities.last)
@@ -82,6 +97,8 @@ extension CityWeatherStorage {
         let newCity = SearchedCities(context: persistentContainer.viewContext)
         newCity.title = title
         newCity.subtitle = subtitle
+        newCity.lat = lat
+        newCity.long = long
         newCity.date = Date()
         
         saveContext()

@@ -10,7 +10,8 @@ import SnapKit
 import CoreLocation
 import MapKit
 
-class CitySelectionView: UIViewController {
+// MARK: CitySelectionView
+final class CitySelectionView: UIViewController {
     private lazy var tableView: UITableView = {
         let tableView = UITableView(frame: CGRect.zero, style: .grouped)
         tableView.backgroundColor = .backgroundColor
@@ -20,7 +21,12 @@ class CitySelectionView: UIViewController {
         tableView.delegate = self
         return tableView
     }()
-    
+    private lazy var activityIndicatorView: UIActivityIndicatorView = {
+        let activityIndicator = UIActivityIndicatorView(style: .medium)
+        activityIndicator.color = .black
+        activityIndicator.hidesWhenStopped = true
+        return activityIndicator
+    }()
     private lazy var searchController: UISearchController = {
         let searchResultController = CitySearchView()
         searchResultController.delegate = self
@@ -30,16 +36,15 @@ class CitySelectionView: UIViewController {
         searchController.definesPresentationContext = true
         searchController.searchResultsUpdater = self
         searchController.searchBar.delegate = self
-        
         return searchController
     }()
     
-    private let viewModel = CitySelectionViewModel()
+    private lazy var viewModel = CitySelectionViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.hidesSearchBarWhenScrolling = false
-        title = "Weather"
+        title = "city.list.title".localized
         viewModel.reloadData()
         setupView()
     }
@@ -50,6 +55,10 @@ class CitySelectionView: UIViewController {
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        reloadData()
+    }
+    
+    private func reloadData() {
         viewModel.reloadData()
         tableView.reloadData()
     }
@@ -58,12 +67,41 @@ class CitySelectionView: UIViewController {
         view.backgroundColor = .white
         navigationItem.searchController = searchController
         
-        view.addSubview(tableView)
+        view.addSubviews([
+            tableView,
+            activityIndicatorView
+        ])
+        
         tableView.snp.makeConstraints { make in
             make.leading.equalToSuperview()
             make.trailing.equalToSuperview()
             make.top.equalToSuperview()
             make.bottom.equalToSuperview()
+        }
+        
+        activityIndicatorView.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.centerY.equalToSuperview()
+        }
+    }
+    
+    private func goToDetails(_ selectedCity: SelectedCity) {
+        activityIndicatorView.startAnimating()
+        viewModel.loadDetailsData(from: selectedCity) { result in
+            self.activityIndicatorView.stopAnimating()
+            switch result {
+            case .success(let weatherData):
+                self.searchController.searchBar.resignFirstResponder()
+                self.searchController.searchBar.text = nil
+                
+                let vc = CityDetailsView()
+                vc.actualWeatherData = weatherData
+                vc.selectedCity = selectedCity
+                
+                self.navigationController?.show(vc, sender: nil)
+            case .failure(_):
+                self.presentErrorAlert()
+            }
         }
     }
 }
@@ -84,9 +122,24 @@ extension CitySelectionView: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
     
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            CityWeatherStorage.shared.removeWeatherStorageObject(viewModel.savedCities[indexPath.row])
+            reloadData()
+        }
+    }
+    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selectedCity = viewModel.savedCities[indexPath.row]
-        goToDetails(SelectedCity(name: selectedCity.name, lat: selectedCity.lat, long: selectedCity.long))
+        
+        goToDetails(SelectedCity(title: selectedCity.name,
+                                 subtitle: selectedCity.country,
+                                 lat: selectedCity.lat,
+                                 long: selectedCity.long))
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -98,6 +151,7 @@ extension CitySelectionView: UITableViewDelegate, UITableViewDataSource {
     }
 }
 
+// MARK: - UISearchResultsUpdating
 extension CitySelectionView: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         guard let text = searchController.searchBar.text else { return }
@@ -106,27 +160,26 @@ extension CitySelectionView: UISearchResultsUpdating {
     }
 }
 
+// MARK: - UISearchBarDelegate
 extension CitySelectionView: UISearchBarDelegate {
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
         DispatchQueue.main.async {
             self.searchController.isActive = true
         }
-        
         return true
     }
 }
 
+// MARK: - UISearchControllerDelegate
 extension CitySelectionView: UISearchControllerDelegate {
     func presentSearchController(_ searchController: UISearchController) {
         searchController.showsSearchResultsController = true
     }
 }
 
+// MARK: - CitySearchDelegate
 extension CitySelectionView: CitySearchDelegate {
-    func goToDetails(_ selectedCity: SelectedCity) {
-        let vc = CityDetailsView()
-        vc.selectedCity = selectedCity
-        
-        navigationController?.show(vc, sender: nil)
+    func selectCity(_ selectedCity: SelectedCity) {
+        goToDetails(selectedCity)
     }
 }

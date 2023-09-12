@@ -8,11 +8,13 @@
 import UIKit
 import MapKit
 
+// MARK: - CitySearchDelegate
 protocol CitySearchDelegate: AnyObject {
-    func goToDetails(_ selectedCity: SelectedCity)
+    func selectCity(_ selectedCity: SelectedCity)
 }
 
-class CitySearchView: UIViewController {
+// MARK: - CitySearchView
+final class CitySearchView: UIViewController {
     private lazy var tableView: UITableView = {
         let tableView = UITableView(frame: CGRect.zero, style: .plain)
         tableView.backgroundColor = .backgroundColor
@@ -22,7 +24,6 @@ class CitySearchView: UIViewController {
         tableView.delegate = self
         return tableView
     }()
-    
     private lazy var searchCompleter: MKLocalSearchCompleter = {
         let searchCompleter = MKLocalSearchCompleter()
         searchCompleter.resultTypes = .address
@@ -58,7 +59,13 @@ class CitySearchView: UIViewController {
             guard let item = response?.mapItems.first else { return }
             
             self.dismiss(animated: true) {
-                self.delegate?.goToDetails(SelectedCity(name: item.name,
+                CityWeatherStorage.shared.saveNewSearchedCities(title: selectedCity.title,
+                                                                subtitle: selectedCity.subtitle,
+                                                                lat: item.placemark.coordinate.latitude,
+                                                                long: item.placemark.coordinate.longitude)
+                
+                self.delegate?.selectCity(SelectedCity(title: selectedCity.title,
+                                                       subtitle: selectedCity.subtitle,
                                                         lat: item.placemark.coordinate.latitude,
                                                         long: item.placemark.coordinate.longitude))
             }
@@ -74,9 +81,23 @@ class CitySearchView: UIViewController {
     }
 }
 
+// MARK: - MKLocalSearchCompleterDelegate
 extension CitySearchView: MKLocalSearchCompleterDelegate {
     func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
-        self.searchResultArray = completer.results
+        searchResultArray = completer.results.filter({ result in
+            if result.title.contains(",") {
+                return false
+            }
+            if result.subtitle.isEmpty {
+                return false
+            }
+            if result.subtitle.contains(",") {
+                return false
+            }
+            return true
+            
+        })
+        
         DispatchQueue.main.async {
             self.tableView.reloadData()
         }
@@ -87,9 +108,10 @@ extension CitySearchView: MKLocalSearchCompleterDelegate {
     }
 }
 
+// MARK: - UITableViewDelegate, UITableViewDataSource
 extension CitySearchView: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if searchResultArray.isEmpty {
+        if searchCompleter.queryFragment.isEmpty {
             return CityWeatherStorage.shared.allSearchedCities().count
         } else {
             return searchResultArray.count
@@ -97,7 +119,7 @@ extension CitySearchView: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        searchResultArray.isEmpty ? "search.city.title.last".localized : nil
+        searchCompleter.queryFragment.isEmpty ? "search.city.title.last".localized : nil
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -105,7 +127,8 @@ extension CitySearchView: UITableViewDelegate, UITableViewDataSource {
             withClass: CitySearchCell.self,
             for: indexPath)
         cell.selectionStyle = .none
-        if searchResultArray.isEmpty {
+        
+        if searchCompleter.queryFragment.isEmpty {
             cell.customize(CityWeatherStorage.shared.allSearchedCities()[indexPath.row])
         } else {
             cell.customize(searchResultArray[indexPath.row])
@@ -115,9 +138,18 @@ extension CitySearchView: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let selectedCity = searchResultArray[indexPath.row]
-        CityWeatherStorage.shared.saveNewSearchedCities(title: selectedCity.title, subtitle: selectedCity.subtitle)
-        findSelectedCityDetails(selectedCity)
+        var selectedCity = MKLocalSearchCompletion()
+        
+        if searchCompleter.queryFragment.isEmpty {
+            let searchedItem = CityWeatherStorage.shared.allSearchedCities()[indexPath.row]
+            self.delegate?.selectCity(SelectedCity(title: searchedItem.title,
+                                                   subtitle: searchedItem.subtitle,
+                                                    lat: searchedItem.lat,
+                                                    long: searchedItem.long))
+        } else {
+            selectedCity = searchResultArray[indexPath.row]
+            findSelectedCityDetails(selectedCity)
+        }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

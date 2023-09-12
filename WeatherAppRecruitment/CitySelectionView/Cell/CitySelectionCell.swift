@@ -7,7 +7,8 @@
 
 import UIKit
 
-class CitySelectionCell: UITableViewCell {
+// MARK: - CitySelectionCell
+final class CitySelectionCell: UITableViewCell {
     private lazy var containerView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
@@ -33,16 +34,23 @@ class CitySelectionCell: UITableViewCell {
         label.textColor = .black
         label.font = .regularFont(size: 12)
         label.numberOfLines = 1
-        label.text = "Głownie chmury"
+        //TODO - get info from API
+        label.text = "Cloudy"
         return label
     }()
     lazy var temperatureLabel: UILabel = {
         let label = UILabel()
+        //TODO - get info from API
         label.text = "26°"
         label.textColor = .black
         label.font = .boldFont(size: 24)
         label.numberOfLines = 1
         return label
+    }()
+    private var detailImage: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "chevron.right")
+        return imageView
     }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -62,7 +70,8 @@ class CitySelectionCell: UITableViewCell {
             cityLabel,
             countryLabel,
             descriptionLabel,
-            temperatureLabel
+            temperatureLabel,
+            detailImage
         ])
         
         containerView.snp.makeConstraints { make in
@@ -88,8 +97,13 @@ class CitySelectionCell: UITableViewCell {
             make.bottom.equalToSuperview().offset(-8)
         }
         
-        temperatureLabel.snp.makeConstraints { make in
+        detailImage.snp.makeConstraints { make in
             make.trailing.equalToSuperview().offset(-12)
+            make.centerY.equalToSuperview()
+        }
+        
+        temperatureLabel.snp.makeConstraints { make in
+            make.trailing.equalTo(detailImage.snp.leading).offset(-12)
             make.top.equalToSuperview().offset(8)
         }
     }

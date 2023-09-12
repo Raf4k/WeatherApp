@@ -7,8 +7,10 @@
 
 import Foundation
 
+// MARK: - SelectedCity
 struct SelectedCity {
-    let name: String?
+    let title: String?
+    let subtitle: String?
     let lat: Double?
     let long: Double?
 }
