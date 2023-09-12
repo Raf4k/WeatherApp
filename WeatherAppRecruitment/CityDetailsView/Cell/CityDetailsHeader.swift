@@ -11,7 +11,6 @@ import UIKit
 final class CityDetailsHeader: UICollectionReusableView {
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .darkGray
         label.font = .regularFont(size: 16)
         return label
