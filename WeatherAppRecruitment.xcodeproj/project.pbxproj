@@ -117,9 +117,9 @@
 		CEC8D1522AAF1E2500244FF6 /* WeatherAppRecruitment */ = {
 			isa = PBXGroup;
 			children = (
+				CEFEEC382AB051A300F1E73F /* WeatherAppRecruitment.entitlements */,
 				CEE7DD7B2AB060C00093C84E /* Api */,
 				CEFEEC392AB0520000F1E73F /* Model */,
-				CEFEEC382AB051A300F1E73F /* WeatherAppRecruitment.entitlements */,
 				CEFEEC352AB0503E00F1E73F /* CityDetailsView */,
 				CEFEEC342AB0500200F1E73F /* CityWeatherStorage */,
 				CEC8D17C2AAF4B1F00244FF6 /* CitySearchView */,

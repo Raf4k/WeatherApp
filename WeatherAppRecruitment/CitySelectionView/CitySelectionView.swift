@@ -168,6 +168,18 @@ extension CitySelectionView: UISearchBarDelegate {
         }
         return true
     }
+    
+    func searchBar(_ searchBar: UISearchBar, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        var allowedCharacterSet = CharacterSet.whitespaces
+        allowedCharacterSet.formUnion(CharacterSet.letters)
+        if let unicoeScalar = text.unicodeScalars.first {
+            if !allowedCharacterSet.contains(unicoeScalar) {
+                return false
+            }
+        }
+        
+        return true
+    }
 }
 
 // MARK: - UISearchControllerDelegate
